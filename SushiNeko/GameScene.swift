@@ -116,7 +116,8 @@ class GameScene: SKScene {
         if let firstPiece = sushiTower.first as SushiPiece? {
             // remove from sushi tower array
             sushiTower.removeFirst()
-            firstPiece.removeFromParent()
+            // animate the punched sushi piece
+            firstPiece.flip(character.side) 
             // add a new sushi piece to the top of the sushi tower
             addRandomPieces(total: 1)
         }
