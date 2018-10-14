@@ -18,6 +18,19 @@ class GameScene: SKScene {
     var sushiBasePiece : SushiPiece!
     var character: Character!
     var sushiTower: [SushiPiece] = []
+    var healthBar: SKSpriteNode!
+    var state : GameState = .title
+    var playButton : MSButtonNode!
+    var health : CGFloat = 1.0 {
+        didSet {
+            // scale health bar between 0.0 -> 0.1 e.g
+            healthBar.xScale = health
+        }
+    }
+    
+    enum GameState {
+        case title, ready, playing, gameOver
+    }
     
     override func didMove(to view: SKView) {
         super.didMove(to: view)
@@ -25,6 +38,8 @@ class GameScene: SKScene {
         // connect game objects
         sushiBasePiece = childNode(withName: "sushiBasePiece") as! SushiPiece
         character = childNode(withName: "character") as! Character
+        healthBar = childNode(withName: "healthBar") as! SKSpriteNode
+        playButton = childNode(withName: "playButton") as! MSButtonNode
         
         // setup sushi connections
         sushiBasePiece.connectChopsticks()
@@ -35,7 +50,15 @@ class GameScene: SKScene {
         
         // add random pieces to the scene
         addRandomPieces(total: 10)
+        
+        // setup play button selection handler
+        playButton.selectedHandler = {
+            // Start Game
+            self.state = .ready
+        }
     }
+    
+    
     
     func addTowerPiece(side: Side) {
         // add a new piece to the sushi tower
@@ -102,6 +125,11 @@ class GameScene: SKScene {
     }
    
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        // game not ready to play
+        if state == .gameOver || state == .title {return}
+        // game begins on first touch
+        if state == .ready {state = .playing }
+        
         // first touch
         let touch = touches.first!
         // get touch position on the screen
@@ -117,7 +145,7 @@ class GameScene: SKScene {
             // remove from sushi tower array
             sushiTower.removeFirst()
             // animate the punched sushi piece
-            firstPiece.flip(character.side) 
+            firstPiece.flip(character.side)
             // add a new sushi piece to the top of the sushi tower
             addRandomPieces(total: 1)
         }
@@ -125,6 +153,14 @@ class GameScene: SKScene {
     
     override func update(_ currentTime: TimeInterval) {
         moveTowerDown()
+        // called before each frame is rendered
+//        if state != .playing { return }
+        // decrease health
+//        health -= 0.01
+//        // has the player ran out of health?
+//        if health < 0 {
+//            gameOver()
+//        }
     }
     
     
