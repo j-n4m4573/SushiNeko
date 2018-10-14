@@ -21,12 +21,20 @@ class GameScene: SKScene {
     var healthBar: SKSpriteNode!
     var state : GameState = .title
     var playButton : MSButtonNode!
+    var scoreLabel : SKLabelNode!
+    var score : Int = 0 {
+        didSet {
+            scoreLabel.text = String(score)
+        }
+    }
     var health : CGFloat = 1.0 {
         didSet {
             // scale health bar between 0.0 -> 0.1 e.g
             healthBar.xScale = health
+            if health > 1.0 { health = 1.0 }
         }
     }
+    
     
     enum GameState {
         case title, ready, playing, gameOver
@@ -40,6 +48,7 @@ class GameScene: SKScene {
         character = childNode(withName: "character") as! Character
         healthBar = childNode(withName: "healthBar") as! SKSpriteNode
         playButton = childNode(withName: "playButton") as! MSButtonNode
+        scoreLabel = childNode(withName: "scoreLabel") as! SKLabelNode
         
         // setup sushi connections
         sushiBasePiece.connectChopsticks()
@@ -125,6 +134,7 @@ class GameScene: SKScene {
     }
    
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+     
         // game not ready to play
         if state == .gameOver || state == .title {return}
         // game begins on first touch
@@ -142,10 +152,25 @@ class GameScene: SKScene {
         }
         // grab sushi piece on top of the base sushi piece, it will always be 'first'
         if let firstPiece = sushiTower.first as SushiPiece? {
+            
+            // check character side against sushi piece side (collision check)
+            if character.side == firstPiece.side {
+                gameOver()
+                return
+            }
+            
+            // increment health
+            health += 0.1
+            
+            // increment score
+            score += 1
+            
             // remove from sushi tower array
             sushiTower.removeFirst()
+            
             // animate the punched sushi piece
             firstPiece.flip(character.side)
+            
             // add a new sushi piece to the top of the sushi tower
             addRandomPieces(total: 1)
         }
@@ -153,15 +178,95 @@ class GameScene: SKScene {
     
     override func update(_ currentTime: TimeInterval) {
         moveTowerDown()
+        
         // called before each frame is rendered
-//        if state != .playing { return }
+        if state != .playing { return }
+        
         // decrease health
-//        health -= 0.01
-//        // has the player ran out of health?
-//        if health < 0 {
-//            gameOver()
-//        }
+        health -= 0.01
+        
+        // has the player ran out of health?
+        if health < 0 {
+            gameOver()
+        }
     }
+    
+    func gameOver() {
+        state = .gameOver
+        
+        // create turnRed SKAction
+        let turnRed = SKAction.colorize(with: .red, colorBlendFactor: 1.0, duration: 0.50)
+        // turn all the sushi pieces red
+        sushiBasePiece.run(turnRed)
+        for sushiPiece in sushiTower {
+            sushiPiece.run(turnRed)
+        }
+        
+        // make the player turn red
+        character.run(turnRed)
+        
+        // change the play button selection handler
+        playButton.selectedHandler = {
+            // grab refrence to the SpriteKit view
+            let skView = self.view as SKView?
+            
+            // load Game Scene
+            guard let scene = GameScene(fileNamed:"GameScene") as GameScene? else {
+                return
+        }
+            // ensure correct aspect mode
+            scene.scaleMode = .aspectFill
+            
+            // restart GameScene
+            skView?.presentScene(scene)
+        }
+    }
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     
